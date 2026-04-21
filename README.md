@@ -62,8 +62,8 @@ Intercepts crisis-language inputs *before* agent execution using `llama-guard-3-
 **Prerequisites:** Node.js 18+, pnpm
 
 ```bash
-git clone https://github.com/Anamitra-Sarkar/Ironclad
-cd Ironclad
+git clone https://github.com/Anamitra-Sarkar/Iron-clad
+cd Iron-clad
 pnpm install
 cp .env.example .env.local
 # Add your VITE_GROQ_API_KEY to .env.local
