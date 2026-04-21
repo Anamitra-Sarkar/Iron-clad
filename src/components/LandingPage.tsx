@@ -90,7 +90,7 @@ export function LandingPage() {
           <div className="footer-tagline">Stress-test ideas before you commit.</div>
         </div>
         <div className="footer-right">
-          Built with React
+          Ironclad
         </div>
       </footer>
     </div>
