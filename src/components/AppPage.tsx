@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useGroq, callGroq } from '../useGroq';
+import { useEpistemicFriction } from '../useEpistemicFriction';
 
-function DevilsRebuttal({ originalIdea, attackText }: { originalIdea: string, attackText: string }) {
+function DevilsRebuttal({ originalIdea, attackText, onRebuttalEngaged }: { originalIdea: string, attackText: string, onRebuttalEngaged?: () => void }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [rebuttal, setRebuttal] = useState("");
   const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle');
@@ -9,6 +10,7 @@ function DevilsRebuttal({ originalIdea, attackText }: { originalIdea: string, at
 
   const handleSubmit = async () => {
     setStatus('loading');
+    onRebuttalEngaged?.();
     const sys = `You are a debate judge. You will receive an original argument, a Devil's Advocate attack against it, and the author's rebuttal to that attack. Judge whether the rebuttal successfully defends the original argument or whether the Devil's Advocate still wins.
 Be direct. Format:
 REBUTTAL VERDICT: [DEFENDED / PARTIALLY DEFENDED / ATTACK STANDS]
@@ -23,7 +25,7 @@ REASON: One sentence. Under 60 words total.`;
 
   if (!isExpanded) {
     return (
-      <button onClick={() => setIsExpanded(true)} style={{ marginTop: '8px', fontSize: '13px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', fontWeight: 600 }}>
+      <button onClick={() => { setIsExpanded(true); trackCardExpansion?.(); }} style={{ marginTop: '8px', fontSize: '13px', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', textAlign: 'left', fontWeight: 600 }}>
         &#8617; Rebut This Attack
       </button>
     );
@@ -65,17 +67,35 @@ import { AttackCard } from './AttackCard';
 import { VerdictCard } from './VerdictCard';
 import { FollowupInput } from './FollowupInput';
 import { Logo } from './Logo';
+import { FramingSensitivityDisplay } from './FramingSensitivityDisplay';
 
 export function AppPage() {
   const { 
     appState, originalIdea, attacks, verdict, followups, 
     history, resilienceScore, strengthenedText, isStrengthening,
+    framingSensitivity, isAnalyzingSensitivity,
     runStressTest, runFollowup, runStrengthen, reset 
   } = useGroq();
 
   const [isBlindSpotModalOpen, setIsBlindSpotModalOpen] = useState(false);
   const [blindSpots, setBlindSpots] = useState<string | null>(null);
   const [isAnalyzingBlindSpots, setIsAnalyzingBlindSpots] = useState(false);
+
+  const { score: epistemicScore, trackCardExpansion, trackRebuttalEngagement, trackIdeaRefinement, trackReadStart, trackReadEnd, computeScore, reset: resetFriction } = useEpistemicFriction();
+  const [previousIdea, setPreviousIdea] = useState<string>('');
+
+  // Compute epistemic friction score when verdict changes
+  useEffect(() => {
+    if (verdict && appState === 'verdict') {
+      // Track that we've read the verdict
+      trackReadStart();
+      const timer = setTimeout(() => {
+        trackReadEnd();
+        computeScore();
+      }, 2000); // Score after 2 seconds of reading
+      return () => clearTimeout(timer);
+    }
+  }, [verdict, appState, trackReadStart, trackReadEnd, computeScore]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -264,7 +284,7 @@ BLIND SPOT 3: ...`;
                   visible={true}
                 />
                 {attack.name === "Devil's Advocate" && attack.content && !attack.error && (appState === 'results' || appState === 'verdict') && (
-                  <DevilsRebuttal originalIdea={originalIdea} attackText={attack.content} />
+                  <DevilsRebuttal originalIdea={originalIdea} attackText={attack.content} onRebuttalEngaged={trackRebuttalEngagement} />
                 )}
               </div>
             ))}
@@ -280,7 +300,9 @@ BLIND SPOT 3: ...`;
 
         {appState === 'verdict' && verdict && (
           <>
-            <VerdictCard verdict={verdict} visible={true} />
+            <VerdictCard verdict={verdict} visible={true} epistemicScore={epistemicScore} />
+
+            <FramingSensitivityDisplay sensitivity={framingSensitivity} visible={appState === 'verdict'} />
 
             <div className="action-buttons-row" style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px' }}>
                <button className="btn-secondary" onClick={handleCopyResult} style={{ padding: '10px 20px', fontSize: '14px', borderRadius: '8px', border: '1px solid var(--border)', background: 'rgba(255,255,255,0.7)', cursor: 'pointer', fontWeight: 600 }}>
@@ -351,7 +373,7 @@ BLIND SPOT 3: ...`;
             </div>
 
             <div style={{ marginTop: '60px', textAlign: 'center' }}>
-              <button className="btn-app-reset" onClick={reset}>
+              <button className="btn-app-reset" onClick={() => { reset(); resetFriction(); }}>
                 &larr; Start completely fresh
               </button>
             </div>

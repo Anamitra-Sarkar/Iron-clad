@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { AGENTS, JUDGE, STRENGTHEN_AGENT, buildPrompt } from './prompts';
+import { useFramingSensitivity } from './useFramingSensitivity';
+import type { FramingSensitivityResult } from './useFramingSensitivity';
 
 export type AppState = 'idle' | 'loading' | 'results' | 'verdict' | 'crisis';
 
@@ -80,6 +82,9 @@ export function useGroq() {
   const [resilienceScore, setResilienceScore] = useState<number>(0);
   const [strengthenedText, setStrengthenedText] = useState<string | null>(null);
   const [isStrengthening, setIsStrengthening] = useState<boolean>(false);
+  
+  const { sensitivity, isAnalyzingSensitivity, runFramingSensitivityAnalysis, clearSensitivity } = useFramingSensitivity();
+  const [framingSensitivity, setFramingSensitivity] = useState<FramingSensitivityResult | null>(null);
 
   const runStressTest = async (idea: string, tone: string = 'Brutal', domain: string = 'None', bypassSafety: boolean = false) => {
     setAppState('loading');
@@ -174,11 +179,22 @@ Analysis Paralysis`;
         if (fetchedDnaTag.startsWith("🧬 ")) fetchedDnaTag = fetchedDnaTag.replace("🧬 ", "");
       } catch(e) {}
 
-      setVerdict({
+      const newVerdict: VerdictResult = {
         status: resolvedStatus,
         reason: reasonMatch?.[1].trim() || 'No explicit reason provided.',
         toFix: toFixVal,
         dnaTag: fetchedDnaTag || undefined
+      };
+
+      setVerdict(newVerdict);
+      
+      // Trigger framing sensitivity analysis in background (non-blocking)
+      runFramingSensitivityAnalysis(idea, tone, domain, newVerdict, attackResults).then(result => {
+        if (sensitivity) {
+          setFramingSensitivity(sensitivity);
+        }
+      }).catch(() => {
+        // Silent failure
       });
       
       // Update History and Score
@@ -293,11 +309,14 @@ Analysis Paralysis`;
     setVerdict(null);
     setFollowups([]);
     setStrengthenedText(null);
+    setFramingSensitivity(null);
+    clearSensitivity();
   };
 
   return { 
     appState, originalIdea, attacks, verdict, followups, 
     history, resilienceScore, strengthenedText, isStrengthening,
+    framingSensitivity, isAnalyzingSensitivity,
     runStressTest, runFollowup, runStrengthen, reset 
   };
 }

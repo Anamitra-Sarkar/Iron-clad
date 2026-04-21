@@ -1,10 +1,13 @@
 import React from 'react';
 import { CustomSelect } from './CustomSelect';
+import { ArgumentLinterDisplay } from './ArgumentLinterDisplay';
+import { useArgumentLinter } from '../useArgumentLinter';
 
 export function InputPanel({ onTest, disabled }: { onTest: (idea: string, tone: string, domain: string) => void, disabled: boolean }) {
   const [text, setText] = React.useState('');
   const [tone, setTone] = React.useState('Brutal');
   const [domain, setDomain] = React.useState('None');
+  const { flaws, isLinting, debouncedLint, clearFlaws } = useArgumentLinter();
 
   const examples = [
     "Drop out of college to start an AI company",
@@ -27,8 +30,14 @@ export function InputPanel({ onTest, disabled }: { onTest: (idea: string, tone: 
     { value: 'Gentle', label: 'Tone: Gentle' },
   ];
 
+  const handleTextChange = (newText: string) => {
+    setText(newText);
+    debouncedLint(newText);
+  };
+
   const handleSubmit = () => {
     if (text.trim() && !disabled) {
+      clearFlaws();
       onTest(text.trim(), tone, domain);
     }
   };
@@ -56,10 +65,11 @@ export function InputPanel({ onTest, disabled }: { onTest: (idea: string, tone: 
         id="main-idea-input"
         placeholder="State your idea, argument, or plan. Be specific."
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => handleTextChange(e.target.value)}
         disabled={disabled}
         className="app-textarea"
       />
+      <ArgumentLinterDisplay flaws={flaws} isLinting={isLinting} />
       {text.length === 0 && (
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
           {examples.map(ex => (
