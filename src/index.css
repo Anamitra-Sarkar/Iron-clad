@@ -131,12 +131,10 @@ a {
   }
 }
 
-/* After animation completes for static elements */
 .animate-fade-in,
 .animate-appear-up,
 .animate-slide-up {
   will-change: auto;
-  /* Set animation-fill-mode: forwards already handles final state */
 }
 
 /* Formatted Text */
@@ -145,6 +143,81 @@ a {
 }
 .formatted-text p:last-child {
   margin-bottom: 0;
+}
+
+/* Strengthened output formatting */
+.strengthened-formatted .paragraph {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text);
+  margin-bottom: 14px;
+}
+.strengthened-formatted .paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.strengthened-formatted .fmt-heading {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+.strengthened-formatted .fmt-heading:first-child {
+  margin-top: 0;
+}
+
+.strengthened-formatted .numbered-list {
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.strengthened-formatted .numbered-list li {
+  display: flex;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text);
+  position: relative;
+  padding-left: 0;
+}
+
+.strengthened-formatted .list-number {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent);
+  min-width: 20px;
+  padding-top: 1px;
+}
+
+.strengthened-formatted .list-content {
+  flex: 1;
+}
+
+.strengthened-formatted .fmt-bullet {
+  display: flex;
+  gap: 10px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.strengthened-formatted .fmt-bullet-dot {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 18px;
+  line-height: 1.4;
 }
 
 ol.numbered-list {
@@ -190,7 +263,7 @@ ol.numbered-list li .list-number {
   z-index: 1;
   animation: buttonGlow 3s alternate infinite cubic-bezier(0.25, 0.1, 0.25, 1);
   will-change: transform, box-shadow;
-  transform: translateZ(0); /* Hardware acceleration */
+  transform: translateZ(0);
 }
 
 .btn-primary::after {
@@ -245,6 +318,41 @@ ol.numbered-list li .list-number {
   box-shadow: var(--shadow-lg);
 }
 
+/* Copy Toast */
+.copy-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(16px);
+  z-index: 9999;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: var(--text);
+  color: var(--bg);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 999px;
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 280ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.copy-toast svg {
+  color: var(--accent-light);
+  flex-shrink: 0;
+}
+
+.copy-toast--visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
 /* Layout and Structure */
 .landing-page {
   position: relative;
@@ -271,7 +379,6 @@ ol.numbered-list li .list-number {
   position: fixed;
 }
 
-/* Organic paper noise texture */
 .ambient-blobs::after {
   content: "";
   position: absolute;
@@ -298,14 +405,14 @@ ol.numbered-list li .list-number {
 
 .blob-1 {
   width: 800px; height: 800px;
-  background-color: #d8e5dc; /* Deeper sage */
+  background-color: #d8e5dc;
   top: -20%; left: -20%;
   animation-duration: 25s;
 }
 
 .blob-2 {
   width: 700px; height: 700px;
-  background-color: #fce1cb; /* Vivid peach */
+  background-color: #fce1cb;
   top: -10%; right: -15%;
   animation-duration: 32s;
   animation-delay: -5s;
@@ -313,7 +420,7 @@ ol.numbered-list li .list-number {
 
 .blob-3 {
   width: 900px; height: 900px;
-  background-color: #fce8a1; /* Stronger sunlight */
+  background-color: #fce8a1;
   bottom: -30%; left: 0%;
   animation-duration: 28s;
   animation-delay: -12s;
@@ -321,7 +428,7 @@ ol.numbered-list li .list-number {
 
 .blob-4 {
   width: 600px; height: 600px;
-  background-color: #f7cac4; /* Rosier blush */
+  background-color: #f7cac4;
   bottom: -20%; right: 0%;
   animation-duration: 36s;
   animation-delay: -18s;
@@ -413,7 +520,7 @@ ol.numbered-list li .list-number {
   text-align: center;
   max-width: 640px;
   margin: 0 auto;
-  padding: 120px 24px 80px; /* Offset for fixed nav */
+  padding: 120px 24px 80px;
 }
 
 .hero-badge {
@@ -456,7 +563,6 @@ ol.numbered-list li .list-number {
   margin-top: 20px;
 }
 
-/* About Section */
 .about-section {
   background-color: rgba(255, 255, 255, 0.4);
   backdrop-filter: blur(16px);
@@ -480,7 +586,6 @@ ol.numbered-list li .list-number {
   margin-top: 24px;
 }
 
-/* How It Works */
 .how-section {
   background-color: transparent;
   padding: 80px 24px;
@@ -572,7 +677,6 @@ ol.numbered-list li .list-number {
   box-shadow: var(--shadow-md);
 }
 
-/* Footer */
 .footer {
   background-color: rgba(250, 249, 246, 0.7);
   backdrop-filter: blur(16px);
@@ -597,7 +701,6 @@ ol.numbered-list li .list-number {
   font-size: 13px;
 }
 
-/* App Page */
 .app-page {
   min-height: 100vh;
   position: relative;
@@ -649,7 +752,6 @@ ol.numbered-list li .list-number {
   padding: 48px 24px 80px;
 }
 
-/* Input Area */
 .app-input-wrapper {
   max-width: 680px;
   margin: 0 auto;
@@ -682,7 +784,7 @@ ol.numbered-list li .list-number {
   resize: vertical;
   transition: border-color var(--transition), box-shadow var(--transition);
   will-change: box-shadow, border-color;
-  transform: translateZ(0); /* Avoid repaints when blur is beneath */
+  transform: translateZ(0);
 }
 
 .app-textarea:focus {
@@ -716,7 +818,6 @@ ol.numbered-list li .list-number {
   transition: color var(--transition);
 }
 
-/* Agent Cards */
 .cards-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -728,7 +829,6 @@ ol.numbered-list li .list-number {
   .cards-grid { grid-template-columns: 1fr; }
 }
 
-/* Tablet — 2 column agent grid */
 @media (min-width: 769px) and (max-width: 1024px) {
   .cards-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -826,14 +926,14 @@ ol.numbered-list li .list-number {
 
 .agent-text-container {
   max-height: 60px;
-  min-height: 44px; /* always shows at least 1 line */
+  min-height: 44px;
   overflow: hidden;
   transition: max-height 500ms cubic-bezier(0.25, 1, 0.5, 1);
   will-change: max-height;
 }
 
 .agent-text-container.expanded {
-  max-height: 1200px; /* arbitrary large value for expansion */
+  max-height: 1200px;
 }
 
 .agent-summary-text {
@@ -858,7 +958,6 @@ ol.numbered-list li .list-number {
   font-size: 14px;
 }
 
-/* Loading Skeletons */
 .loading-container {
   margin-top: 48px;
   text-align: center;
@@ -883,7 +982,6 @@ ol.numbered-list li .list-number {
   50% { opacity: 1; }
 }
 
-/* Verdict Card */
 .verdict-container {
   margin-top: 24px;
   max-width: 800px;
@@ -922,7 +1020,6 @@ ol.numbered-list li .list-number {
   box-shadow: var(--shadow-md);
 }
 
-/* Override per verdict type for color-matched top border */
 .verdict-card.verdict-type-survives {
   border-top-color: var(--verdict-survives-color);
 }
@@ -973,7 +1070,6 @@ ol.numbered-list li .list-number {
   line-height: 1.75;
 }
 
-/* Reset Button */
 .btn-app-reset {
   display: block;
   margin: 40px auto 0;
@@ -990,7 +1086,6 @@ ol.numbered-list li .list-number {
   color: var(--text);
 }
 
-/* Docs Page */
 .docs-page {
   min-height: 100vh;
   position: relative;
@@ -1088,7 +1183,6 @@ ol.numbered-list li .list-number {
   font-weight: 600;
 }
 
-/* History Dropdown */
 .history-dropdown .history-menu {
   position: absolute;
   top: 100%;
@@ -1150,7 +1244,6 @@ ol.numbered-list li .list-number {
 .hist-PARTIALLY-SURVIVES { background: var(--pessimist-color); color: white; }
 .hist-DOES-NOT-SURVIVE { background: var(--devil-color); color: white; }
 
-/* Elements Below The Buttons Additions */
 .btn-secondary {
   transition: transform var(--transition-smooth), background-color var(--transition);
 }
@@ -1162,7 +1255,6 @@ ol.numbered-list li .list-number {
   transform: translate3d(0, 1px, 0) !important;
 }
 
-/* Custom Select Dropdowns */
 .app-select {
   appearance: none;
   -webkit-appearance: none;
@@ -1247,7 +1339,6 @@ ol.numbered-list li .list-number {
   font-weight: 600;
 }
 
-/* Example Chips */
 .example-chip {
   font-size: 13px;
   padding: 8px 16px;
@@ -1343,4 +1434,3 @@ ol.numbered-list li .list-number {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-

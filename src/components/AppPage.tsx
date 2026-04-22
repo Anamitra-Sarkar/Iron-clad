@@ -11,10 +11,7 @@ function DevilsRebuttal({ originalIdea, attackText, onRebuttalEngaged }: { origi
   const handleSubmit = async () => {
     setStatus('loading');
     onRebuttalEngaged?.();
-    const sys = `You are a debate judge. You will receive an original argument, a Devil's Advocate attack against it, and the author's rebuttal to that attack. Judge whether the rebuttal successfully defends the original argument or whether the Devil's Advocate still wins.
-Be direct. Format:
-REBUTTAL VERDICT: [DEFENDED / PARTIALLY DEFENDED / ATTACK STANDS]
-REASON: One sentence. Under 60 words total.`;
+    const sys = `You are a debate judge. You will receive an original argument, a Devil's Advocate attack against it, and the author's rebuttal to that attack. Judge whether the rebuttal successfully defends the original argument or whether the Devil's Advocate still wins.\nBe direct. Format:\nREBUTTAL VERDICT: [DEFENDED / PARTIALLY DEFENDED / ATTACK STANDS]\nREASON: One sentence. Under 60 words total.`;
     const context = `ORIGINAL ARGUMENT:\n${originalIdea}\n\nDEVIL'S ADVOCATE:\n${attackText}\n\nREBUTTAL:\n${rebuttal}`;
     try {
       const res = await callGroq(sys, context, "llama-3.1-8b-instant");
@@ -68,6 +65,7 @@ import { VerdictCard } from './VerdictCard';
 import { FollowupInput } from './FollowupInput';
 import { Logo } from './Logo';
 import { FramingSensitivityDisplay } from './FramingSensitivityDisplay';
+import { FormattedText } from './FormattedText';
 
 export function AppPage() {
   const { 
@@ -80,36 +78,32 @@ export function AppPage() {
   const [isBlindSpotModalOpen, setIsBlindSpotModalOpen] = useState(false);
   const [blindSpots, setBlindSpots] = useState<string | null>(null);
   const [isAnalyzingBlindSpots, setIsAnalyzingBlindSpots] = useState(false);
+  const [copyToast, setCopyToast] = useState(false);
 
   const { score: epistemicScore, trackCardExpansion, trackRebuttalEngagement, trackIdeaRefinement, trackReadStart, trackReadEnd, computeScore, reset: resetFriction } = useEpistemicFriction();
   const [previousIdea, setPreviousIdea] = useState<string>('');
 
-  // Compute epistemic friction score when verdict changes
   useEffect(() => {
     if (verdict && appState === 'verdict') {
-      // Track that we've read the verdict
       trackReadStart();
       const timer = setTimeout(() => {
         trackReadEnd();
         computeScore();
-      }, 2000); // Score after 2 seconds of reading
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [verdict, appState, trackReadStart, trackReadEnd, computeScore]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // CMD/CTRL + Enter
       if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
         const submitBtn = document.getElementById('main-submit-btn') as HTMLButtonElement | null;
         if (submitBtn && !submitBtn.disabled) submitBtn.click();
       }
-      // CMD/CTRL + K
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         document.getElementById('main-idea-input')?.focus();
       }
-      // Escape
       if (e.key === 'Escape') {
         setIsBlindSpotModalOpen(false);
       }
@@ -121,8 +115,10 @@ export function AppPage() {
   const handleCopyResult = () => {
     if (!verdict) return;
     const text = `Ironclad Stress Test\n\nIDEA:\n${originalIdea}\n\nVERDICT: ${verdict.status}\nREASON: ${verdict.reason}\nTO FIX: ${verdict.toFix}\n\nStress test your ideas at Ironclad.`;
-    navigator.clipboard.writeText(text);
-    alert('Copied result to clipboard!');
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyToast(true);
+      setTimeout(() => setCopyToast(false), 2400);
+    });
   };
 
   const handleAnalyzeBlindSpots = async () => {
@@ -130,14 +126,7 @@ export function AppPage() {
     if (blindSpots) return;
     setIsAnalyzingBlindSpots(true);
     try {
-      const systemPrompt = `You are a cognitive pattern analyst. You will receive a series of ideas and arguments that a person submitted for stress testing, along with the verdicts and weaknesses identified. Your job is to identify 3 recurring cognitive blind spots or thinking patterns this person exhibits across their decisions. Be specific, compassionate, and constructive. Format your response exactly as:
-
-BLIND SPOT 1: [Name of pattern]
-WHAT IT LOOKS LIKE IN YOUR THINKING: [1-2 sentences specific to their actual ideas]
-HOW TO OVERCOME IT: [1 concrete actionable sentence]
-
-BLIND SPOT 2: ...
-BLIND SPOT 3: ...`;
+      const systemPrompt = `You are a cognitive pattern analyst. You will receive a series of ideas and arguments that a person submitted for stress testing, along with the verdicts and weaknesses identified. Your job is to identify 3 recurring cognitive blind spots or thinking patterns this person exhibits across their decisions. Be specific, compassionate, and constructive. Format your response exactly as:\n\nBLIND SPOT 1: [Name of pattern]\nWHAT IT LOOKS LIKE IN YOUR THINKING: [1-2 sentences specific to their actual ideas]\nHOW TO OVERCOME IT: [1 concrete actionable sentence]\n\nBLIND SPOT 2: ...\nBLIND SPOT 3: ...`;
       const userContent = history.map(h => `IDEA: ${h.idea}\nVERDICT: ${h.verdictStatus}\nWEAKNESSES: ${h.toFix || ''}`).join('\n\n---\n\n');
       const response = await callGroq(systemPrompt, userContent, 'llama-3.3-70b-versatile');
       setBlindSpots(response);
@@ -149,6 +138,14 @@ BLIND SPOT 3: ...`;
 
   return (
     <div className="app-page page-transition-enter">
+      {/* Copy Toast */}
+      <div className={`copy-toast${copyToast ? ' copy-toast--visible' : ''}`} role="status" aria-live="polite">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+        Copied to clipboard
+      </div>
+
       {isBlindSpotModalOpen && (
         <div className="modal-overlay animate-fade-in" style={{
             position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -317,12 +314,11 @@ BLIND SPOT 3: ...`;
 
             {strengthenedText && (
               <div className="strengthened-card animate-appear-up" style={{ marginTop: '32px', backgroundColor: 'rgba(220, 245, 230, 0.4)', border: '1px solid var(--accent)', borderRadius: '12px', padding: '32px' }}>
-                 <div className="verdict-label" style={{ color: 'var(--accent)' }}>✨ Idea Architect (Strengthened Version)</div>
-                 <p className="agent-full-text" style={{ marginTop: '16px', fontSize: '16px' }}>{strengthenedText}</p>
+                 <div className="verdict-label" style={{ color: 'var(--accent)', marginBottom: '16px' }}>✨ Idea Architect — Strengthened Version</div>
+                 <FormattedText text={strengthenedText} className="strengthened-formatted" />
               </div>
             )}
 
-            {/* Follow-up Thread */}
             {followups.map((f, i) => (
               <div key={f.id} className="followup-thread-item animate-slide-up" style={{ marginTop: '48px', paddingTop: '40px', borderTop: '1px dashed var(--border-strong)' }}>
                 <div className="followup-user-prompt" style={{ marginBottom: '24px' }}>
