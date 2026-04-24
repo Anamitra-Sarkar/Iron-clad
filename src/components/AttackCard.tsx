@@ -18,6 +18,10 @@ const REFUSAL_PATTERNS = [
   /i (won't|will not|don't|do not) (provide|help|assist|create|generate)/i,
   /i must (decline|refuse)/i,
   /cannot (promote|condone|glorify|endorse)/i,
+  /i cannot engage in a conversation that/i,
+  /is there anything else i can help you with/i,
+  /i('m| am) not going to (provide|help|assist|create|generate)/i,
+  /i do not generate content (that|which)/i,
 ];
 
 const INTERVENTION_MESSAGE =
