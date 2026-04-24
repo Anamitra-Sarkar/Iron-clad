@@ -69,6 +69,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: 72px;
 }
 
 body {
@@ -81,6 +82,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden; /* moved here from .landing-page so fixed positioning works */
 }
 
 ::-webkit-scrollbar { width: 6px; }
@@ -356,7 +358,7 @@ ol.numbered-list li .list-number {
 /* Layout and Structure */
 .landing-page {
   position: relative;
-  overflow-x: hidden;
+  /* overflow-x removed — was breaking position:fixed on .hero-nav */
   background-color: var(--bg);
 }
 
@@ -468,6 +470,12 @@ ol.numbered-list li .list-number {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
+  transition: box-shadow var(--transition-smooth), background-color var(--transition-smooth);
+}
+
+.hero-nav--scrolled {
+  background-color: rgba(250, 249, 246, 0.97);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
 }
 
 .hero-links {
