@@ -240,7 +240,8 @@ export function AppPage() {
                         </button>
                         {getVfsLogLength() >= 3 && (
                           <button
-                            className="blind-spot-btn"
+                            className="btn-secondary"
+                            style={{ width: '100%', fontSize: '12px', padding: '8px', borderRadius: '6px' }}
                             onClick={exportVfsLog}
                           >
                             Export Research Data ({getVfsLogLength()} trials)
