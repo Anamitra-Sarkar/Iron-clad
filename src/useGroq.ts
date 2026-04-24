@@ -38,6 +38,14 @@ export interface Followup {
   verdict?: VerdictResult;
 }
 
+function sanitizeModelOutput(text: string): string {
+  return text
+    .replace(/<think>[\s\S]*?<\/think>/gi, '')
+    .replace(/<think>[\s\S]*$/gi, '')
+    .replace(/^\s*<\/think>\s*/gi, '')
+    .trim();
+}
+
 export async function callGroq(systemPrompt: string, userContent: string, model: string) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) {
@@ -66,7 +74,8 @@ export async function callGroq(systemPrompt: string, userContent: string, model:
   }
 
   const data = await response.json();
-  return data.choices[0].message.content.trim();
+  const raw = data?.choices?.[0]?.message?.content ?? '';
+  return sanitizeModelOutput(raw);
 }
 
 export function useGroq() {
@@ -101,7 +110,6 @@ export function useGroq() {
       try {
         const guardSystem = "If the input contains explicit self-harm intent, suicidal ideation, or crisis language, reply with CRISIS. Otherwise reply SAFE.";
         const guardResponse = await callGroq(guardSystem, idea, "llama-guard-3-8b");
-        // Fallback to testing exactly as required if the literal string is mapped, otherwise it uses guard
         if (guardResponse.includes('CRISIS') || guardResponse.includes('unsafe')) {
           setAppState('crisis');
           return;
@@ -164,17 +172,7 @@ export function useGroq() {
       
       let fetchedDnaTag = "";
       try {
-        const dnaSystem = `Read this idea and its stress test result. Classify it into EXACTLY ONE of these categories — reply with only the category name, nothing else:
-
-Fear-Based Decision
-Overconfidence Trap  
-Sunk Cost Fallacy
-Timing Problem
-Resource Gap
-Execution Risk
-Strong Foundation
-Emotional Reasoning
-Analysis Paralysis`;
+        const dnaSystem = `Read this idea and its stress test result. Classify it into EXACTLY ONE of these categories — reply with only the category name, nothing else:\n\nFear-Based Decision\nOverconfidence Trap  \nSunk Cost Fallacy\nTiming Problem\nResource Gap\nExecution Risk\nStrong Foundation\nEmotional Reasoning\nAnalysis Paralysis`;
         fetchedDnaTag = (await callGroq(dnaSystem, `IDEA: ${idea}\nVERDICT: ${resolvedStatus}\nREASON: ${reasonMatch?.[1]}`, "llama-3.1-8b-instant")).trim().toUpperCase();
         if (fetchedDnaTag.startsWith("🧬 ")) fetchedDnaTag = fetchedDnaTag.replace("🧬 ", "");
       } catch(e) {}
