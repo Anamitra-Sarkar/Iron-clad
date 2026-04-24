@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { callGroq } from './useGroq';
 import { JUDGE, buildPrompt, AGENTS } from './prompts';
 import type { VerdictResult } from './useGroq';
+import { logVfsTrial } from './useVfsLogger';
 
 export interface FramingSensitivityResult {
   originalVerdict: VerdictResult;
@@ -102,6 +103,17 @@ export function useFramingSensitivity() {
             optimisticVerdict,
             pessimisticVerdict,
             hasSensitivity,
+          });
+
+          logVfsTrial({
+            idea,
+            domain,
+            fOpt: optimisticFrame,
+            fPess: pessimisticFrame,
+            verdictBase: originalVerdict,
+            verdictOpt: optimisticVerdict,
+            verdictPess: pessimisticVerdict,
+            judgeModel: JUDGE.model,
           });
         }
       } catch {
