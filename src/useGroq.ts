@@ -38,19 +38,24 @@ export interface Followup {
   verdict?: VerdictResult;
 }
 
-function sanitizeModelOutput(text: string): string {
-  return text
-    .replace(/<think>[\s\S]*?<\/think>/gi, '')
-    .replace(/<think>[\s\S]*$/gi, '')
-    .replace(/^\s*<\/think>\s*/gi, '')
-    .trim();
-}
-
 export async function callGroq(systemPrompt: string, userContent: string, model: string) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) {
     throw new Error('Groq API Key is missing');
   }
+
+  const isQwen = model.toLowerCase().includes('qwen');
+
+  const body: Record<string, unknown> = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userContent }
+    ],
+    temperature: 0.7,
+    max_tokens: 300,
+    ...(isQwen ? { reasoning_effort: 'none' } : {})
+  };
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
@@ -58,15 +63,7 @@ export async function callGroq(systemPrompt: string, userContent: string, model:
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${apiKey}`
     },
-    body: JSON.stringify({
-      model: model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userContent }
-      ],
-      temperature: 0.7,
-      max_tokens: 300
-    })
+    body: JSON.stringify(body)
   });
 
   if (!response.ok) {
@@ -75,7 +72,7 @@ export async function callGroq(systemPrompt: string, userContent: string, model:
 
   const data = await response.json();
   const raw = data?.choices?.[0]?.message?.content ?? '';
-  return sanitizeModelOutput(raw);
+  return raw.trim();
 }
 
 export function useGroq() {
@@ -105,7 +102,6 @@ export function useGroq() {
     setFollowups([]);
     setStrengthenedText(null);
 
-    // Safety guard step
     if (!bypassSafety) {
       try {
         const guardSystem = "If the input contains explicit self-harm intent, suicidal ideation, or crisis language, reply with CRISIS. Otherwise reply SAFE.";
@@ -115,11 +111,10 @@ export function useGroq() {
           return;
         }
       } catch (e) {
-        // Silently proceed if guard fails or 404s
+        // Silently proceed if guard fails
       }
     }
 
-    // Fire 3 attack agents in parallel
     const attackPromises = [
       AGENTS.DEVILS_ADVOCATE,
       AGENTS.PESSIMIST,
@@ -151,7 +146,6 @@ export function useGroq() {
     setAttacks(attackResults);
     setAppState('results');
     
-    // Fire Judge agent
     await new Promise(r => setTimeout(r, 300));
 
     try {
@@ -161,13 +155,11 @@ export function useGroq() {
 
       const judgeOutput = await callGroq(JUDGE.basePrompt, judgeContext, JUDGE.model);
       
-      // Parse verdict
       const statusMatch = judgeOutput.match(/VERDICT:\s*(SURVIVES|PARTIALLY SURVIVES|DOES NOT SURVIVE)/i);
       const reasonMatch = judgeOutput.match(/REASON:\s*(.+?)(?=\nTO FIX:|$)/is);
       const toFixMatch = judgeOutput.match(/TO FIX:\s*(.+)$/is);
 
       const resolvedStatus = (statusMatch?.[1].toUpperCase() as any) || 'PARTIALLY SURVIVES';
-      
       const toFixVal = toFixMatch?.[1].trim() || 'Consider iterating on the arguments provided above.';
       
       let fetchedDnaTag = "";
@@ -186,16 +178,10 @@ export function useGroq() {
 
       setVerdict(newVerdict);
       
-      // Trigger framing sensitivity analysis in background (non-blocking)
-      runFramingSensitivityAnalysis(idea, tone, domain, newVerdict, attackResults).then(result => {
-        if (sensitivity) {
-          setFramingSensitivity(sensitivity);
-        }
-      }).catch(() => {
-        // Silent failure
-      });
+      runFramingSensitivityAnalysis(idea, tone, domain, newVerdict, attackResults).then(() => {
+        if (sensitivity) setFramingSensitivity(sensitivity);
+      }).catch(() => {});
       
-      // Update History and Score
       setHistory(prev => {
         const newVal = [{ 
           id: Date.now().toString(), 
