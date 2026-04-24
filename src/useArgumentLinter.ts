@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { callGroq } from './useGroq';
 
 export interface ArgumentFlaw {
@@ -11,7 +11,7 @@ export interface ArgumentFlaw {
 export function useArgumentLinter() {
   const [flaws, setFlaws] = useState<ArgumentFlaw[]>([]);
   const [isLinting, setIsLinting] = useState(false);
-  const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const lintArgument = useCallback(async (text: string) => {
     if (text.length <= 80) {
@@ -28,10 +28,8 @@ Do NOT include any markdown formatting or code blocks.`;
 
       const response = await callGroq(systemPrompt, text, 'llama-3.1-8b-instant');
       
-      // Parse JSON response
       let parsedFlaws: Array<{ flaw: string; severity: string }> = [];
       try {
-        // Try to extract JSON from response (in case there's extra text)
         const jsonMatch = response.match(/\[[\s\S]*\]/);
         if (jsonMatch) {
           parsedFlaws = JSON.parse(jsonMatch[0]);
@@ -39,13 +37,11 @@ Do NOT include any markdown formatting or code blocks.`;
           parsedFlaws = JSON.parse(response);
         }
       } catch {
-        // Silent failure - invalid JSON response
         setFlaws([]);
         setIsLinting(false);
         return;
       }
 
-      // Map to ArgumentFlaw with IDs
       const flawsWithIds: ArgumentFlaw[] = parsedFlaws.map((f, idx) => ({
         id: `flaw-${idx}`,
         flaw: f.flaw,
@@ -55,7 +51,6 @@ Do NOT include any markdown formatting or code blocks.`;
 
       setFlaws(flawsWithIds);
     } catch {
-      // Silent failure on API error
       setFlaws([]);
     } finally {
       setIsLinting(false);
@@ -63,24 +58,21 @@ Do NOT include any markdown formatting or code blocks.`;
   }, []);
 
   const debouncedLint = useCallback((text: string) => {
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
     }
-
-    const timer = setTimeout(() => {
+    debounceTimer.current = setTimeout(() => {
       lintArgument(text);
-    }, 1200); // 1200ms debounce
-
-    setDebounceTimer(timer);
-  }, [debounceTimer, lintArgument]);
+    }, 1200);
+  }, [lintArgument]);
 
   const clearFlaws = useCallback(() => {
     setFlaws([]);
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-      setDebounceTimer(null);
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+      debounceTimer.current = null;
     }
-  }, [debounceTimer]);
+  }, []);
 
   return {
     flaws,
