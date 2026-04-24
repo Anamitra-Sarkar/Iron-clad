@@ -1,12 +1,32 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Logo } from './Logo';
 
-// We will append LandingPage specific CSS into index.css for simplicity
-// But conceptually this is the component structure.
-
 export function LandingPage() {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
     <div className="landing-page page-transition-enter">
+
+      {/* Fixed Navbar */}
+      <nav className={`hero-nav hero-nav--fixed ${scrolled ? 'hero-nav--scrolled' : ''}`}>
+        <div className="hero-logo"><Logo size={26} className="brand-icon" />Ironclad</div>
+        <div className="hero-links">
+          <a href="#home">Home</a>
+          <a href="#about">About the App</a>
+          <a href="#how-it-works">How It Works</a>
+          <a href="#/docs">Docs</a>
+        </div>
+        <a href="#/app" className="btn-primary" style={{ padding: '10px 20px', fontSize: '14px', fontFamily: 'var(--font-display)', fontWeight: 500 }}>
+          Start Testing &rarr;
+        </a>
+      </nav>
+
       <div id="home" className="hero-section">
         <div className="ambient-blobs fixed-blobs">
           <div className="blob blob-1"></div>
@@ -14,19 +34,6 @@ export function LandingPage() {
           <div className="blob blob-3"></div>
           <div className="blob blob-4"></div>
         </div>
-        
-        <nav className="hero-nav">
-          <div className="hero-logo"><Logo size={26} className="brand-icon" />Ironclad</div>
-          <div className="hero-links">
-            <a href="#home">Home</a>
-            <a href="#about">About the App</a>
-            <a href="#how-it-works">How It Works</a>
-            <a href="#/docs">Docs</a>
-          </div>
-          <a href="#/app" className="btn-primary" style={{ padding: '10px 20px', fontSize: '14px', fontFamily: 'var(--font-display)', fontWeight: 500 }}>
-            Start Testing &rarr;
-          </a>
-        </nav>
 
         <div className="hero-content">
           <div className="hero-badge">Argument Stress-Tester</div>
