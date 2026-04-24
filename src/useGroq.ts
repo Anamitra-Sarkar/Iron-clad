@@ -38,7 +38,7 @@ export interface Followup {
   verdict?: VerdictResult;
 }
 
-export async function callGroq(systemPrompt: string, userContent: string, model: string) {
+export async function callGroq(systemPrompt: string, userContent: string, model: string, maxTokens: number = 350) {
   const apiKey = import.meta.env.VITE_GROQ_API_KEY;
   if (!apiKey) {
     throw new Error('Groq API Key is missing');
@@ -53,7 +53,7 @@ export async function callGroq(systemPrompt: string, userContent: string, model:
       { role: 'user', content: userContent }
     ],
     temperature: 0.7,
-    max_tokens: 300,
+    max_tokens: maxTokens,
     ...(isQwen ? { reasoning_effort: 'none' } : {})
   };
 
@@ -278,7 +278,7 @@ export function useGroq() {
     setIsStrengthening(true);
     try {
        const context = `Original Idea: "${originalIdea}"\n\nAttacks:\n${attacks.map(a => a.name + ": " + a.content).join("\n")}\n\nJudge Verdict: ${verdict.status}\nJudge Reason: ${verdict.reason}\nJudge Fix: ${verdict.toFix}`;
-       const content = await callGroq(STRENGTHEN_AGENT.basePrompt, context, STRENGTHEN_AGENT.model);
+       const content = await callGroq(STRENGTHEN_AGENT.basePrompt, context, STRENGTHEN_AGENT.model, 1200);
        setStrengthenedText(content);
     } catch (e) {
        setStrengthenedText("Error generating strengthened idea.");
