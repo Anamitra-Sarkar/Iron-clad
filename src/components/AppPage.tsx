@@ -66,6 +66,7 @@ import { FollowupInput } from './FollowupInput';
 import { Logo } from './Logo';
 import { FramingSensitivityDisplay } from './FramingSensitivityDisplay';
 import { FormattedText } from './FormattedText';
+import { exportVfsLog, getVfsLogLength } from '../useVfsLogger';
 
 export function AppPage() {
   const { 
@@ -237,6 +238,15 @@ export function AppPage() {
                         <button className="btn-secondary" style={{ width: '100%', fontSize: '12px', padding: '8px', borderRadius: '6px' }} onClick={handleAnalyzeBlindSpots}>
                           📊 My Blind Spots
                         </button>
+                        {getVfsLogLength() >= 3 && (
+                          <button
+                            className="btn-secondary"
+                            style={{ width: '100%', fontSize: '12px', padding: '8px', borderRadius: '6px' }}
+                            onClick={exportVfsLog}
+                          >
+                            Export Research Data ({getVfsLogLength()} trials)
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
